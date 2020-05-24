@@ -196,6 +196,8 @@ class RenamePDFsByTitle(object):
             doc = self.doc = PDFDocument(parser)
         except PDFSyntaxError:
             return {}
+        except :
+            return {}
         parser.set_document(doc)
 
         if not hasattr(doc, 'info') or len(doc.info) == 0:
@@ -204,8 +206,8 @@ class RenamePDFsByTitle(object):
 
     def _get_xmp_metadata(self):
         t = a = None
-        metadata = resolve1(self.doc.catalog['Metadata']).get_data()
         try:
+            metadata = resolve1(self.doc.catalog['Metadata']).get_data()
             md = xmp_to_dict(metadata)
         except:
             return t, a
@@ -243,7 +245,11 @@ class RenamePDFsByTitle(object):
         return t, a
 
     def _au_last_name(self, name):
-        return name.split()[-1]
+        try:
+            name_ = name.split()[-1]
+        except : 
+            name_ = name
+        return  name_
 
 
 if __name__ == "__main__":
