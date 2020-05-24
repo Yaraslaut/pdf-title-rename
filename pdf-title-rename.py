@@ -18,6 +18,7 @@ DATE = '2017-07-15'
 
 import os
 import sys
+import glob
 import argparse
 import subprocess
 
@@ -36,7 +37,9 @@ class RenamePDFsByTitle(object):
     """
 
     def __init__(self, args):
-        self.pdf_files = args.files
+        self.pdf_files = None
+        if args.path:
+            self._find_all_pdf_in_path(args.path)
         self.dry_run = args.dry_run
         self.interactive = args.interactive
         self.destination = None
@@ -57,7 +60,7 @@ class RenamePDFsByTitle(object):
         for f in self.pdf_files:
             root, ext = os.path.splitext(f)
             path, base = os.path.split(root)
-            print('Processing "%s":' % f)
+            print('Processing "%s":' % f.split('/')[-1])
 
             # Parse standard and XMP metadata, then go interactive if specified
             title, author = self._get_info(f)
@@ -72,7 +75,7 @@ class RenamePDFsByTitle(object):
                 continue
 
             newf = os.path.join(path, self._new_filename(title, author))
-            print(' -- Renaming to "%s"' % newf)
+            print(' -- Renaming to "%s"' % newf.split('/')[-1])
             if self.dry_run:
                 continue
 
@@ -164,6 +167,10 @@ class RenamePDFsByTitle(object):
             return ref.resolve()
         return ref
 
+    def  _find_all_pdf_in_path(self,path):
+        self.pdf_files = [f for f in glob.glob(path + "**/*.pdf", recursive=True)]
+
+
     def _interactive_info_query(self, fn, t, a):
         print('-' * 60)
         print('Filename:'.ljust(20), fn)
@@ -241,14 +248,19 @@ class RenamePDFsByTitle(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="PDF batch rename")
-    parser.add_argument('files', nargs='+',
-                        help='list of pdf files to rename')
+
     parser.add_argument('-n', dest='dry_run', action='store_true',
                         help='dry-run listing of filename changes')
+
     parser.add_argument('-i', dest='interactive', action='store_true',
                         help='interactive mode')
+
     parser.add_argument('-d', '--dest', dest='destination',
                         help='destination folder for renamed files')
+
+    parser.add_argument('-p', '--path', dest ='path',
+                        help = 'Rename all files in path')
+
     args = parser.parse_args()
     sys.exit(RenamePDFsByTitle(args).main())
 
